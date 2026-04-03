@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Results Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --surface: #111420;
+    --card: #161b2e;
+    --border: rgba(120, 140, 200, 0.12);
+    --gold: #c9a84c;
+    --gold-light: #e6c97a;
+    --gold-dim: rgba(201, 168, 76, 0.15);
+    --text: #e8eaf6;
+    --muted: #7b82a8;
+    --accent: #4e7fff;
+    --accent-dim: rgba(78, 127, 255, 0.12);
+    --green: #4ecca3;
+    --green-dim: rgba(78, 204, 163, 0.12);
+    --red: #ff6b6b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 0%, rgba(78, 127, 255, 0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 100%, rgba(201, 168, 76, 0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold-dim);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  h1 span {
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  /* Search section */
+  .search-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .search-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent);
+  }
+
+  .search-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .id-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .id-input::placeholder { color: rgba(123, 130, 168, 0.4); }
+
+  .id-input:focus {
+    border-color: rgba(201, 168, 76, 0.5);
+    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
+  }
+
+  .search-btn {
+    background: linear-gradient(135deg, #c9a84c, #e6c97a);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0a0c14;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .search-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(201, 168, 76, 0.3);
+  }
+
+  .search-btn:active { transform: translateY(0); }
+
+  /* Error / hint */
+  .hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .error-msg {
+    display: none;
+    margin-top: 12px;
+    color: var(--red);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Results area */
+  #results { display: none; animation: fadeUp 0.4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Student profile card */
+  .profile-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(78,127,255,0.4), transparent);
+  }
+
+  .avatar {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--accent-dim), var(--gold-dim));
+    border: 1px solid rgba(78, 127, 255, 0.3);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .profile-info { flex: 1; min-width: 0; }
+
+  .profile-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .profile-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .meta-chip-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .meta-chip-dot.gold { background: var(--gold); }
+
+  /* Results heading */
+  .results-heading {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-left: 4px;
+  }
+
+  /* Paper cards */
+  .papers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .paper-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 26px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .paper-card:hover {
+    border-color: rgba(201,168,76,0.25);
+    transform: translateY(-2px);
+  }
+
+  .paper-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 0 0 18px 18px;
+  }
+
+  .paper-card.good::after  { background: linear-gradient(90deg, var(--green), transparent); }
+  .paper-card.avg::after   { background: linear-gradient(90deg, var(--accent), transparent); }
+  .paper-card.below::after { background: linear-gradient(90deg, var(--red), transparent); }
+
+  .paper-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+
+  .paper-no-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .paper-no-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+    margin-top: 2px;
+  }
+
+  .rank-badge {
+    background: var(--gold-dim);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 10px;
+    padding: 6px 12px;
+    text-align: center;
+  }
+
+  .rank-badge .rank-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+  }
+
+  .rank-badge .rank-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 3px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .stat-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .stat-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .stat-val.positive { color: var(--green); }
+  .stat-val.neutral  { color: var(--accent); }
+  .stat-val.negative { color: var(--red); }
+
+  /* Class avg bar */
+  .bar-section { margin-top: 18px; }
+
+  .bar-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .bar-track {
+    height: 5px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill-avg {
+    position: absolute;
+    top: 0; left: 0; height: 100%;
+    background: rgba(78,127,255,0.35);
+    border-radius: 100px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .bar-fill-student {
+    position: absolute;
+    top: 0; left: 0; height: 100%;
+    border-radius: 100px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s;
+  }
+
+  .bar-fill-student.good    { background: var(--green); }
+  .bar-fill-student.neutral { background: var(--accent); }
+  .bar-fill-student.bad     { background: var(--red); }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .no-results-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  /* Decorative lines */
+  .deco-line {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .page-wrap { padding: 40px 16px 80px; }
+    .search-section { padding: 22px 18px; }
+    .input-row { flex-direction: column; }
+    .profile-card { padding: 20px; }
+    .papers-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <header class="header">
+    <div class="header-badge">
+      <span class="badge-dot"></span>
+      Academic Results Portal
+    </div>
+    <h1>Student <span>Performance</span></h1>
+    <p class="subtitle">Marks · Rank · Z-Score by Paper</p>
+  </header>
+
+  <section class="search-section">
+    <label class="search-label" for="studentId">Enter Student ID</label>
+    <div class="input-row">
+      <input
+        class="id-input"
+        id="studentId"
+        type="number"
+        placeholder="e.g. 1001"
+        min="1001"
+        autocomplete="off"
+      />
+      <button class="search-btn" onclick="search()">Search</button>
+    </div>
+    <p class="hint">IDs range: 1001–1061 (AL 2027) &nbsp;|&nbsp; 2001–2017 (AL 2026)</p>
+    <p class="error-msg" id="errorMsg">⚠ Student ID not found. Please check and try again.</p>
+  </section>
+
+  <div id="results"></div>
+
+</div>
+
+<script>
+// ─── Embedded Data ────────────────────────────────────────────────────────────
+const MARKS_DATA = [{"student_id":1001,"paper_no":9,"mark":54.0},{"student_id":1002,"paper_no":9,"mark":52.5},{"student_id":1003,"paper_no":9,"mark":50.0},{"student_id":1004,"paper_no":9,"mark":49.5},{"student_id":1005,"paper_no":9,"mark":47.5},{"student_id":1006,"paper_no":9,"mark":47.5},{"student_id":1007,"paper_no":9,"mark":43.0},{"student_id":1008,"paper_no":9,"mark":40.5},{"student_id":1009,"paper_no":9,"mark":40.25},{"student_id":1010,"paper_no":9,"mark":39.0},{"student_id":1011,"paper_no":9,"mark":38.0},{"student_id":1012,"paper_no":9,"mark":37.25},{"student_id":1013,"paper_no":9,"mark":37.0},{"student_id":1014,"paper_no":9,"mark":37.0},{"student_id":1015,"paper_no":9,"mark":33.75},{"student_id":1016,"paper_no":9,"mark":32.75},{"student_id":1017,"paper_no":9,"mark":32.0},{"student_id":1018,"paper_no":9,"mark":32.0},{"student_id":1019,"paper_no":9,"mark":32.0},{"student_id":1020,"paper_no":9,"mark":31.25},{"student_id":1021,"paper_no":9,"mark":30.75},{"student_id":1022,"paper_no":9,"mark":30.0},{"student_id":1023,"paper_no":9,"mark":27.75},{"student_id":1024,"paper_no":9,"mark":27.0},{"student_id":1025,"paper_no":9,"mark":26.0},{"student_id":1026,"paper_no":9,"mark":25.25},{"student_id":1027,"paper_no":9,"mark":25.0},{"student_id":1028,"paper_no":9,"mark":25.0},{"student_id":1029,"paper_no":9,"mark":24.0},{"student_id":1030,"paper_no":9,"mark":23.5},{"student_id":1031,"paper_no":9,"mark":22.0},{"student_id":1032,"paper_no":9,"mark":22.0},{"student_id":1033,"paper_no":9,"mark":22.0},{"student_id":1034,"paper_no":9,"mark":21.5},{"student_id":1035,"paper_no":9,"mark":21.25},{"student_id":1036,"paper_no":9,"mark":21.0},{"student_id":1037,"paper_no":9,"mark":20.25},{"student_id":1038,"paper_no":9,"mark":20.0},{"student_id":1039,"paper_no":9,"mark":20.0},{"student_id":1040,"paper_no":9,"mark":19.5},{"student_id":1041,"paper_no":9,"mark":19.0},{"student_id":1042,"paper_no":9,"mark":19.0},{"student_id":1043,"paper_no":9,"mark":18.5},{"student_id":1044,"paper_no":9,"mark":16.25},{"student_id":1045,"paper_no":9,"mark":15.5},{"student_id":1046,"paper_no":9,"mark":13.5},{"student_id":1047,"paper_no":9,"mark":13.0},{"student_id":1048,"paper_no":9,"mark":12.5},{"student_id":1049,"paper_no":9,"mark":11.0},{"student_id":1050,"paper_no":9,"mark":8.25},{"student_id":1051,"paper_no":9,"mark":8.25},{"student_id":1052,"paper_no":9,"mark":8.25},{"student_id":1053,"paper_no":9,"mark":6.5},{"student_id":1054,"paper_no":9,"mark":5.0},{"student_id":1055,"paper_no":9,"mark":3.75},{"student_id":1056,"paper_no":9,"mark":3.75},{"student_id":1057,"paper_no":9,"mark":3.5},{"student_id":1058,"paper_no":9,"mark":3.5},{"student_id":1059,"paper_no":9,"mark":2.75},{"student_id":1060,"paper_no":9,"mark":2.75},{"student_id":1061,"paper_no":9,"mark":0.5},{"student_id":2001,"paper_no":41,"mark":75.25},{"student_id":2002,"paper_no":41,"mark":65.75},{"student_id":2003,"paper_no":41,"mark":50.0},{"student_id":2004,"paper_no":41,"mark":49.75},{"student_id":2005,"paper_no":41,"mark":49.5},{"student_id":2006,"paper_no":41,"mark":47.5},{"student_id":2007,"paper_no":41,"mark":42.25},{"student_id":2008,"paper_no":41,"mark":40.25},{"student_id":2009,"paper_no":41,"mark":38.75},{"student_id":2010,"paper_no":41,"mark":37.5},{"student_id":2011,"paper_no":41,"mark":36.25},{"student_id":2012,"paper_no":41,"mark":26.25},{"student_id":2013,"paper_no":41,"mark":21.5},{"student_id":2014,"paper_no":41,"mark":18.5},{"student_id":2015,"paper_no":41,"mark":17.0},{"student_id":2016,"paper_no":41,"mark":15.0},{"student_id":2017,"paper_no":41,"mark":13.5}];
+
+const STUDENTS_DATA = [{"student_id":1001,"student_name":"Praveen Akash","AL_year":2027},{"student_id":1002,"student_name":"Vihanga Angelo","AL_year":2027},{"student_id":1003,"student_name":"Sasindu Dinara","AL_year":2027},{"student_id":1004,"student_name":"Nadeen Adeesha","AL_year":2027},{"student_id":1005,"student_name":"Ravin Sathindu","AL_year":2027},{"student_id":1006,"student_name":"Lochana Fernando","AL_year":2027},{"student_id":1007,"student_name":"D.E.Sanuth Nihansa","AL_year":2027},{"student_id":1008,"student_name":"Hiruni Dilhara","AL_year":2027},{"student_id":1009,"student_name":"Dahami Niwarthana","AL_year":2027},{"student_id":1010,"student_name":"Lashan Fernando","AL_year":2027},{"student_id":1011,"student_name":"Senehas","AL_year":2027},{"student_id":1012,"student_name":"Ashwel Mathew","AL_year":2027},{"student_id":1013,"student_name":"Divon Rashen","AL_year":2027},{"student_id":1014,"student_name":"Manuja Dewmina","AL_year":2027},{"student_id":1015,"student_name":"Ryan","AL_year":2027},{"student_id":1016,"student_name":"Samili Perera","AL_year":2027},{"student_id":1017,"student_name":"Nikila","AL_year":2027},{"student_id":1018,"student_name":"Charith Dilina","AL_year":2027},{"student_id":1019,"student_name":"Vihan Lambert","AL_year":2027},{"student_id":1020,"student_name":"Sarvesh Krishna","AL_year":2027},{"student_id":1021,"student_name":"Pruthuvi","AL_year":2027},{"student_id":1022,"student_name":"Jinuka Pulsitha","AL_year":2027},{"student_id":1023,"student_name":"Oneli Hettiarachchi","AL_year":2027},{"student_id":1024,"student_name":"Sudeepa","AL_year":2027},{"student_id":1025,"student_name":"Senuth Lowe","AL_year":2027},{"student_id":1026,"student_name":"Rusell Wijerathna","AL_year":2027},{"student_id":1027,"student_name":"Induwara","AL_year":2027},{"student_id":1028,"student_name":"Shenuk Fernando","AL_year":2027},{"student_id":1029,"student_name":"Shemari Ameesha","AL_year":2027},{"student_id":1030,"student_name":"Nishan Appuhamy","AL_year":2027},{"student_id":1031,"student_name":"Shenuka","AL_year":2027},{"student_id":1032,"student_name":"Kitma Sirimanna","AL_year":2027},{"student_id":1033,"student_name":"No name 02","AL_year":2027},{"student_id":1034,"student_name":"Savindya Tanavi","AL_year":2027},{"student_id":1035,"student_name":"Abilash Akarsha","AL_year":2027},{"student_id":1036,"student_name":"Minuka Fernando","AL_year":2027},{"student_id":1037,"student_name":"Sakuna Perera","AL_year":2027},{"student_id":1038,"student_name":"Sithuki Wijewikrama","AL_year":2027},{"student_id":1039,"student_name":"Aminka Perera","AL_year":2027},{"student_id":1040,"student_name":"Ronal Fernando","AL_year":2027},{"student_id":1041,"student_name":"Shehani Silva","AL_year":2027},{"student_id":1042,"student_name":"R.Shadurshan","AL_year":2027},{"student_id":1043,"student_name":"P.Vittara Kurera","AL_year":2027},{"student_id":1044,"student_name":"Shiroshi Jayawardhana","AL_year":2027},{"student_id":1045,"student_name":"Hasfa Imithiyas","AL_year":2027},{"student_id":1046,"student_name":"Chamudi Silva","AL_year":2027},{"student_id":1047,"student_name":"Onela Gomez","AL_year":2027},{"student_id":1048,"student_name":"Akein Sehas","AL_year":2027},{"student_id":1049,"student_name":"Omethmee","AL_year":2027},{"student_id":1050,"student_name":"Umara Fernando","AL_year":2027},{"student_id":1051,"student_name":"Harindi Fernando","AL_year":2027},{"student_id":1052,"student_name":"Senesh Fernando","AL_year":2027},{"student_id":1053,"student_name":"Maleesha","AL_year":2027},{"student_id":1054,"student_name":"Noname 01","AL_year":2027},{"student_id":1055,"student_name":"Raneshi Raharathnam","AL_year":2027},{"student_id":1056,"student_name":"Sangeeth","AL_year":2027},{"student_id":1057,"student_name":"Dulya Holmes","AL_year":2027},{"student_id":1058,"student_name":"Sahansa","AL_year":2027},{"student_id":1059,"student_name":"Sanuley Herath","AL_year":2027},{"student_id":1060,"student_name":"Vishal","AL_year":2027},{"student_id":1061,"student_name":"Chrishane Fernando","AL_year":2027},{"student_id":2001,"student_name":"Seniru Thisan","AL_year":2026},{"student_id":2002,"student_name":"Nethini Perera","AL_year":2026},{"student_id":2003,"student_name":"Amelia","AL_year":2026},{"student_id":2004,"student_name":"Nadeesh Fernando","AL_year":2026},{"student_id":2005,"student_name":"Vinula Jayaweera","AL_year":2026},{"student_id":2006,"student_name":"Shevon Fernando","AL_year":2026},{"student_id":2007,"student_name":"Mishali Dias","AL_year":2026},{"student_id":2008,"student_name":"Dahami Fernando","AL_year":2026},{"student_id":2009,"student_name":"Sachini Vaas","AL_year":2026},{"student_id":2010,"student_name":"Senethya Fernando","AL_year":2026},{"student_id":2011,"student_name":"Amishki Ranasinghe","AL_year":2026},{"student_id":2012,"student_name":"Kaveen Ishara","AL_year":2026},{"student_id":2013,"student_name":"Yasiru","AL_year":2026},{"student_id":2014,"student_name":"Rashmi Rosa","AL_year":2026},{"student_id":2015,"student_name":"Chitmalee Thesanga","AL_year":2026},{"student_id":2016,"student_name":"Senith De Silva","AL_year":2026},{"student_id":2017,"student_name":"Christeen","AL_year":2026}];
+
+// ─── Stats helpers ────────────────────────────────────────────────────────────
+function mean(arr) { return arr.reduce((a,b) => a+b, 0) / arr.length; }
+
+function stddev(arr) {
+  const m = mean(arr);
+  const variance = arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length;
+  return Math.sqrt(variance);
+}
+
+function zScore(val, m, sd) {
+  if (sd === 0) return 0;
+  return (val - m) / sd;
+}
+
+// Rank: position when sorted descending (1 = highest). Ties share top rank.
+function rank(val, allMarks) {
+  const sorted = [...allMarks].sort((a,b) => b - a);
+  return sorted.indexOf(val) + 1;
+}
+
+// ─── Lookup maps ──────────────────────────────────────────────────────────────
+const studentMap = {};
+STUDENTS_DATA.forEach(s => studentMap[s.student_id] = s);
+
+// Paper → all marks array
+const paperMarksMap = {};
+MARKS_DATA.forEach(r => {
+  if (!paperMarksMap[r.paper_no]) paperMarksMap[r.paper_no] = [];
+  paperMarksMap[r.paper_no].push(r.mark);
+});
+
+// Per paper: precompute mean + sd
+const paperStats = {};
+Object.keys(paperMarksMap).forEach(p => {
+  const marks = paperMarksMap[p];
+  const m = mean(marks);
+  const sd = stddev(marks);
+  paperStats[p] = { mean: m, sd, max: Math.max(...marks) };
+});
+
+// ─── Search logic ─────────────────────────────────────────────────────────────
+function search() {
+  const inputEl = document.getElementById('studentId');
+  const errorEl = document.getElementById('errorMsg');
+  const resultsEl = document.getElementById('results');
+  const id = parseInt(inputEl.value.trim());
+
+  errorEl.style.display = 'none';
+  resultsEl.style.display = 'none';
+  resultsEl.innerHTML = '';
+
+  if (!id) { showError(); return; }
+
+  const student = studentMap[id];
+  if (!student) { showError(); return; }
+
+  const studentMarks = MARKS_DATA.filter(r => r.student_id === id);
+  if (!studentMarks.length) { showError(); return; }
+
+  // Build HTML
+  const initials = student.student_name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+
+  let html = `
+    <div class="profile-card">
+      <div class="avatar">${initials}</div>
+      <div class="profile-info">
+        <div class="profile-name">${student.student_name}</div>
+        <div class="profile-meta">
+          <span class="meta-chip"><span class="meta-chip-dot"></span> ID: ${student.student_id}</span>
+          <span class="meta-chip"><span class="meta-chip-dot gold"></span> AL Year: ${student.AL_year}</span>
+          <span class="meta-chip"><span class="meta-chip-dot"></span> ${studentMarks.length} Paper${studentMarks.length > 1 ? 's' : ''}</span>
+        </div>
+      </div>
+    </div>
+    <p class="results-heading">Paper Results</p>
+    <div class="papers-grid">
+  `;
+
+  studentMarks.forEach(entry => {
+    const p = entry.paper_no;
+    const mark = entry.mark;
+    const stats = paperStats[p];
+    const z = zScore(mark, stats.mean, stats.sd);
+    const allMarks = paperMarksMap[p];
+    const r = rank(mark, allMarks);
+    const total = allMarks.length;
+    const pct = (mark / stats.max) * 100;
+    const avgPct = (stats.mean / stats.max) * 100;
+    const zDisplay = (z >= 0 ? '+' : '') + z.toFixed(3);
+
+    let cardClass = 'avg', zClass = 'neutral', barClass = 'neutral';
+    if (z >= 0.5)       { cardClass = 'good';  zClass = 'positive'; barClass = 'good'; }
+    else if (z < -0.5)  { cardClass = 'below'; zClass = 'negative'; barClass = 'bad'; }
+
+    html += `
+      <div class="paper-card ${cardClass}">
+        <div class="paper-header">
+          <div>
+            <div class="paper-no-label">Paper No.</div>
+            <div class="paper-no-value">${p}</div>
+          </div>
+          <div class="rank-badge">
+            <span class="rank-num">${r}<span style="font-size:11px;color:var(--muted)">/${total}</span></span>
+            <span class="rank-label">Rank</span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-lbl">Score</div>
+            <div class="stat-val">${mark}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">Class Avg</div>
+            <div class="stat-val">${stats.mean.toFixed(2)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">Z-Score</div>
+            <div class="stat-val ${zClass}">${zDisplay}</div>
+          </div>
+        </div>
+
+        <div class="bar-section">
+          <div class="bar-label-row">
+            <span>Score vs Class</span>
+            <span>${mark} / ${stats.max}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill-avg" style="width:${avgPct}%"></div>
+            <div class="bar-fill-student ${barClass}" style="width:0%" data-target="${pct}"></div>
+          </div>
+          <div class="bar-label-row" style="margin-top:4px">
+            <span style="color:rgba(78,127,255,0.6)">▬ avg</span>
+            <span>σ = ${stats.sd.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  resultsEl.innerHTML = html;
+  resultsEl.style.display = 'block';
+
+  // Animate bars
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bar-fill-student[data-target]').forEach(el => {
+      const target = el.dataset.target;
+      setTimeout(() => { el.style.width = target + '%'; }, 100);
+    });
+  });
+}
+
+function showError() {
+  document.getElementById('errorMsg').style.display = 'block';
+}
+
+// Enter key support
+document.getElementById('studentId').addEventListener('keydown', e => {
+  if (e.key === 'Enter') search();
+});
+</script>
+</body>
+</html>
