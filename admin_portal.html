@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Portal — Class Management</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f0f;
+  --surface: #141818;
+  --panel: #191e1e;
+  --card: #1e2424;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.14);
+  --cyan: #00e5c8;
+  --cyan-dim: rgba(0,229,200,0.1);
+  --cyan-mid: rgba(0,229,200,0.2);
+  --text: #e8eded;
+  --text-2: #9aabab;
+  --text-3: #566060;
+  --red: #ff5757;
+  --red-dim: rgba(255,87,87,0.12);
+  --amber: #ffb547;
+  --amber-dim: rgba(255,181,71,0.12);
+  --green: #4ecb71;
+  --green-dim: rgba(78,203,113,0.12);
+  --sidebar-w: 220px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+
+/* ── Login ── */
+#login-screen{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:32px;
+}
+#login-screen::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(0,229,200,0.05) 0%,transparent 70%);
+}
+.login-box{
+  background:var(--panel);border:1px solid var(--border-bright);
+  border-radius:16px;padding:40px 44px;width:360px;
+  position:relative;overflow:hidden;
+}
+.login-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+}
+.login-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:13px;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--cyan);
+  margin-bottom:28px;display:flex;align-items:center;gap:8px;
+}
+.login-logo-dot{width:6px;height:6px;background:var(--cyan);border-radius:50%;}
+.login-title{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;margin-bottom:6px;}
+.login-sub{color:var(--text-2);font-size:12px;margin-bottom:28px;}
+.field-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text-3);margin-bottom:8px;}
+.field-input{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:11px 14px;font-family:'IBM Plex Mono',monospace;
+  font-size:14px;color:var(--text);outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.field-input:focus{border-color:rgba(0,229,200,0.4);box-shadow:0 0 0 3px rgba(0,229,200,0.06);}
+.field-input::placeholder{color:var(--text-3);}
+.login-btn{
+  width:100%;margin-top:20px;background:var(--cyan);
+  border:none;border-radius:8px;padding:12px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
+  letter-spacing:0.1em;text-transform:uppercase;
+  color:#0d0f0f;cursor:pointer;transition:opacity 0.15s,transform 0.15s;
+}
+.login-btn:hover{opacity:0.9;transform:translateY(-1px);}
+.login-error{
+  display:none;margin-top:12px;text-align:center;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--red);
+}
+
+/* ── App Shell ── */
+#app{display:none;height:100vh;display:flex;flex-direction:column;}
+
+.topbar{
+  height:52px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;
+  position:relative;z-index:10;
+}
+.topbar-logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:12px;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--cyan);
+  display:flex;align-items:center;gap:7px;margin-right:8px;
+}
+.topbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;color:var(--text-2);}
+.topbar-spacer{flex:1;}
+.topbar-pill{
+  background:var(--cyan-dim);border:1px solid rgba(0,229,200,0.2);
+  border-radius:100px;padding:4px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cyan);
+  letter-spacing:0.05em;
+}
+.logout-btn{
+  background:none;border:1px solid var(--border);border-radius:6px;
+  padding:5px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:var(--text-3);cursor:pointer;letter-spacing:0.05em;
+  transition:border-color 0.15s,color 0.15s;
+}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+
+.body-wrap{display:flex;flex:1;overflow:hidden;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:16px 12px;gap:2px;overflow-y:auto;
+}
+.sidebar-section-label{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--text-3);padding:10px 8px 6px;margin-top:8px;
+}
+.sidebar-section-label:first-child{margin-top:0;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:8px;cursor:pointer;transition:background 0.15s,color 0.15s;
+  font-size:13px;font-weight:500;color:var(--text-2);border:none;background:none;
+  width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--card);color:var(--text);}
+.nav-item.active{background:var(--cyan-dim);color:var(--cyan);}
+.nav-icon{font-size:14px;width:16px;text-align:center;flex-shrink:0;}
+
+/* ── Main ── */
+.main{flex:1;overflow-y:auto;padding:28px 28px 60px;}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn 0.25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.view-header{margin-bottom:24px;}
+.view-title{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:22px;
+  letter-spacing:-0.02em;
+}
+.view-sub{color:var(--text-2);font-size:12px;margin-top:4px;}
+
+/* ── Stat cards ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;
+}
+.stat-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+}
+.stat-card.c1::after{background:var(--cyan);}
+.stat-card.c2::after{background:var(--amber);}
+.stat-card.c3::after{background:var(--green);}
+.stat-card.c4::after{background:var(--red);}
+.sc-label{font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;}
+.sc-value{font-family:'IBM Plex Mono',monospace;font-size:26px;
+  font-weight:500;line-height:1;color:var(--text);}
+.sc-sub{font-size:11px;color:var(--text-2);margin-top:5px;}
+
+/* ── Table ── */
+.table-wrap{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+}
+.table-toolbar{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.table-toolbar-title{font-family:'Syne',sans-serif;font-weight:700;
+  font-size:13px;flex:1;}
+.toolbar-search{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:7px;padding:7px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--text);outline:none;width:180px;
+  transition:border-color 0.2s;
+}
+.toolbar-search:focus{border-color:rgba(0,229,200,0.4);}
+.toolbar-search::placeholder{color:var(--text-3);}
+.toolbar-btn{
+  background:none;border:1px solid var(--border);border-radius:7px;
+  padding:6px 12px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:0.05em;color:var(--text-2);cursor:pointer;
+  transition:border-color 0.15s,color 0.15s;white-space:nowrap;
+}
+.toolbar-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+table{width:100%;border-collapse:collapse;}
+th{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text-3);text-align:left;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  background:var(--surface);cursor:pointer;white-space:nowrap;user-select:none;
+}
+th:hover{color:var(--text-2);}
+th.sorted{color:var(--cyan);}
+td{
+  padding:11px 16px;border-bottom:1px solid var(--border);
+  font-size:13px;vertical-align:middle;
+}
+tr:last-child td{border-bottom:none;}
+tr.expandable:hover td{background:rgba(255,255,255,0.02);cursor:pointer;}
+tr.expanded-row td{padding:0;}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  border-radius:5px;padding:3px 8px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;
+}
+.badge-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,229,200,0.2);}
+.badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,181,71,0.2);}
+.badge-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(78,203,113,0.2);}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,87,87,0.2);}
+.z-pos{color:var(--green);}
+.z-neu{color:var(--amber);}
+.z-neg{color:var(--red);}
+
+/* ── Expandable detail row ── */
+.expand-panel{
+  background:var(--card);padding:16px 20px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;
+}
+.expand-paper{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+}
+.ep-label{font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;}
+.ep-paper{font-family:'IBM Plex Mono',monospace;font-size:20px;
+  font-weight:500;margin-bottom:10px;color:var(--text);}
+.ep-stats{display:flex;flex-direction:column;gap:5px;}
+.ep-row{display:flex;justify-content:space-between;font-size:12px;}
+.ep-key{color:var(--text-2);}
+.ep-val{font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.mini-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:100px;
+  margin-top:8px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:100px;transition:width 0.6s ease;}
+
+/* ── Forms ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:640px;}
+.form-grid.single{grid-template-columns:1fr;}
+.field-group{display:flex;flex-direction:column;gap:7px;}
+.field-group.span2{grid-column:1/-1;}
+.form-section{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:24px;margin-bottom:20px;
+  position:relative;overflow:hidden;max-width:640px;
+}
+.form-section::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,200,0.3),transparent);
+}
+.form-section-title{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
+  margin-bottom:20px;display:flex;align-items:center;gap:8px;
+}
+.form-section-title span{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:var(--cyan);background:var(--cyan-dim);
+  border:1px solid rgba(0,229,200,0.2);
+  border-radius:4px;padding:2px 7px;font-weight:400;
+}
+select.field-input{cursor:pointer;}
+select.field-input option{background:var(--card);}
+.submit-btn{
+  background:var(--cyan);border:none;border-radius:8px;
+  padding:11px 28px;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:12px;letter-spacing:0.08em;text-transform:uppercase;
+  color:#0d0f0f;cursor:pointer;transition:opacity 0.15s,transform 0.15s;
+  margin-top:4px;
+}
+.submit-btn:hover{opacity:0.9;transform:translateY(-1px);}
+.submit-btn.danger{background:var(--red);color:#fff;}
+.form-feedback{
+  display:none;margin-top:12px;padding:10px 14px;
+  border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+}
+.form-feedback.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(78,203,113,0.2);}
+.form-feedback.error{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,87,87,0.2);}
+
+/* ── Delete actions ── */
+.action-btn{
+  background:none;border:1px solid var(--border);border-radius:5px;
+  padding:4px 8px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:0.05em;cursor:pointer;color:var(--text-3);
+  transition:border-color 0.15s,color 0.15s;
+}
+.action-btn:hover{border-color:var(--red);color:var(--red);}
+.action-btn.edit:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* ── Export ── */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:600px;}
+.export-card{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:22px 24px;
+}
+.export-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:6px;}
+.export-card-sub{color:var(--text-2);font-size:12px;margin-bottom:18px;line-height:1.5;}
+.export-btn{
+  background:none;border:1px solid var(--border);border-radius:7px;
+  padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);
+  cursor:pointer;transition:all 0.15s;
+}
+.export-btn:hover{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan);}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:28px;right:28px;z-index:999;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:12px 18px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;
+  display:flex;align-items:center;gap:10px;
+  transform:translateY(20px);opacity:0;
+  transition:all 0.25s cubic-bezier(0.4,0,0.2,1);pointer-events:none;
+}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.ok{border-color:rgba(78,203,113,0.3);color:var(--green);}
+#toast.err{border-color:rgba(255,87,87,0.3);color:var(--red);}
+
+/* ── Empty ── */
+.empty-state{
+  text-align:center;padding:48px 20px;
+  color:var(--text-3);font-family:'IBM Plex Mono',monospace;font-size:12px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.15);}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><span class="login-logo-dot"></span>Admin Portal</div>
+    <div class="login-title">Sign In</div>
+    <div class="login-sub">Class Management System</div>
+    <div class="field-group">
+      <label class="field-label">Password</label>
+      <input class="field-input" id="loginPass" type="password" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Access Portal</button>
+    <div class="login-error" id="loginErr">⚠ Incorrect password</div>
+    <div style="margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-3);text-align:center;">Default: admin123</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+
+  <div class="topbar">
+    <div class="topbar-logo"><span class="login-logo-dot"></span>ADMIN</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-title">Class Management Portal</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-pill" id="topbar-counts">Loading…</div>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div class="body-wrap">
+    <nav class="sidebar">
+      <div class="sidebar-section-label">Overview</div>
+      <button class="nav-item active" data-view="dashboard" onclick="nav(this)">
+        <span class="nav-icon">◈</span> Dashboard
+      </button>
+
+      <div class="sidebar-section-label">Data Entry</div>
+      <button class="nav-item" data-view="add-student" onclick="nav(this)">
+        <span class="nav-icon">＋</span> Add Student
+      </button>
+      <button class="nav-item" data-view="add-mark" onclick="nav(this)">
+        <span class="nav-icon">✎</span> Add Mark
+      </button>
+
+      <div class="sidebar-section-label">Records</div>
+      <button class="nav-item" data-view="students-list" onclick="nav(this)">
+        <span class="nav-icon">◎</span> All Students
+      </button>
+      <button class="nav-item" data-view="marks-list" onclick="nav(this)">
+        <span class="nav-icon">≡</span> All Marks
+      </button>
+      <button class="nav-item" data-view="performance" onclick="nav(this)">
+        <span class="nav-icon">▲</span> Performance
+      </button>
+
+      <div class="sidebar-section-label">System</div>
+      <button class="nav-item" data-view="export" onclick="nav(this)">
+        <span class="nav-icon">↓</span> Export CSV
+      </button>
+    </nav>
+
+    <main class="main" id="main">
+
+      <!-- Dashboard -->
+      <div class="view active" id="view-dashboard">
+        <div class="view-header">
+          <div class="view-title">Dashboard</div>
+          <div class="view-sub">Class overview and key statistics</div>
+        </div>
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">Top Performers — All Papers</div>
+          </div>
+          <table id="top-table">
+            <thead><tr>
+              <th>Rank</th><th>Student</th><th>ID</th><th>AL Year</th><th>Paper</th><th>Score</th><th>Z-Score</th>
+            </tr></thead>
+            <tbody id="top-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Student -->
+      <div class="view" id="view-add-student">
+        <div class="view-header">
+          <div class="view-title">Add Student</div>
+          <div class="view-sub">Register a new student to the class</div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">Student Details <span>students.csv</span></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">Student ID</label>
+              <input class="field-input" id="as-id" type="number" placeholder="e.g. 1062">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Full Name</label>
+              <input class="field-input" id="as-name" type="text" placeholder="e.g. Amal Perera">
+            </div>
+            <div class="field-group">
+              <label class="field-label">AL Year</label>
+              <select class="field-input" id="as-year">
+                <option value="2027">2027</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2028">2028</option>
+              </select>
+            </div>
+          </div>
+          <button class="submit-btn" onclick="addStudent()">Add Student</button>
+          <div class="form-feedback" id="as-fb"></div>
+        </div>
+      </div>
+
+      <!-- Add Mark -->
+      <div class="view" id="view-add-mark">
+        <div class="view-header">
+          <div class="view-title">Add Mark</div>
+          <div class="view-sub">Record a paper result for a student</div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">Mark Entry <span>marks.csv</span></div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label class="field-label">Student ID</label>
+              <select class="field-input" id="am-student"></select>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Paper No.</label>
+              <input class="field-input" id="am-paper" type="number" placeholder="e.g. 9">
+            </div>
+            <div class="field-group span2">
+              <label class="field-label">Mark</label>
+              <input class="field-input" id="am-mark" type="number" step="0.25" placeholder="e.g. 45.50">
+            </div>
+          </div>
+          <button class="submit-btn" onclick="addMark()">Record Mark</button>
+          <div class="form-feedback" id="am-fb"></div>
+        </div>
+      </div>
+
+      <!-- Students List -->
+      <div class="view" id="view-students-list">
+        <div class="view-header">
+          <div class="view-title">All Students</div>
+          <div class="view-sub">Click a row to see all paper results</div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">Student Registry</div>
+            <input class="toolbar-search" id="sl-search" placeholder="Search name or ID…" oninput="renderStudentsList()">
+            <select class="toolbar-search" id="sl-year" style="width:110px" onchange="renderStudentsList()">
+              <option value="">All Years</option>
+            </select>
+          </div>
+          <table>
+            <thead><tr>
+              <th onclick="sortStudents('student_id')">ID</th>
+              <th onclick="sortStudents('student_name')">Name</th>
+              <th onclick="sortStudents('AL_year')">AL Year</th>
+              <th>Papers</th>
+              <th>Avg Score</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="sl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Marks List -->
+      <div class="view" id="view-marks-list">
+        <div class="view-header">
+          <div class="view-title">All Marks</div>
+          <div class="view-sub">Full marks register across all papers</div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">Marks Register</div>
+            <input class="toolbar-search" id="ml-search" placeholder="Student ID or paper…" oninput="renderMarksList()">
+            <select class="toolbar-search" id="ml-paper" style="width:130px" onchange="renderMarksList()">
+              <option value="">All Papers</option>
+            </select>
+          </div>
+          <table>
+            <thead><tr>
+              <th onclick="sortMarks('student_id')">Student ID</th>
+              <th onclick="sortMarks('student_name')">Name</th>
+              <th onclick="sortMarks('paper_no')">Paper No.</th>
+              <th onclick="sortMarks('mark')">Mark</th>
+              <th>Rank</th>
+              <th>Z-Score</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="ml-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Performance -->
+      <div class="view" id="view-performance">
+        <div class="view-header">
+          <div class="view-title">Performance</div>
+          <div class="view-sub">Per-student breakdown across all papers</div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="table-toolbar-title">Student Performance</div>
+            <input class="toolbar-search" id="pf-search" placeholder="Search student…" oninput="renderPerformance()">
+            <select class="toolbar-search" id="pf-paper" style="width:130px" onchange="renderPerformance()">
+              <option value="">All Papers</option>
+            </select>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Student</th>
+              <th>ID</th>
+              <th>AL Year</th>
+              <th>Papers</th>
+              <th>Avg Mark</th>
+              <th>Best Rank</th>
+              <th>Avg Z</th>
+            </tr></thead>
+            <tbody id="pf-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Export -->
+      <div class="view" id="view-export">
+        <div class="view-header">
+          <div class="view-title">Export CSV</div>
+          <div class="view-sub">Download current data as CSV files</div>
+        </div>
+        <div class="export-grid">
+          <div class="export-card">
+            <div class="export-card-title">students.csv</div>
+            <div class="export-card-sub">All student records including name and AL year.</div>
+            <button class="export-btn" onclick="exportStudents()">↓ Download students.csv</button>
+          </div>
+          <div class="export-card">
+            <div class="export-card-title">marks.csv</div>
+            <div class="export-card-sub">All mark records including student ID, paper number, and mark.</div>
+            <button class="export-btn" onclick="exportMarks()">↓ Download marks.csv</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ─── Seed Data ────────────────────────────────────────────────────────────────
+const SEED_STUDENTS = [{"student_id":1001,"student_name":"Praveen Akash","AL_year":2027},{"student_id":1002,"student_name":"Vihanga Angelo","AL_year":2027},{"student_id":1003,"student_name":"Sasindu Dinara","AL_year":2027},{"student_id":1004,"student_name":"Nadeen Adeesha","AL_year":2027},{"student_id":1005,"student_name":"Ravin Sathindu","AL_year":2027},{"student_id":1006,"student_name":"Lochana Fernando","AL_year":2027},{"student_id":1007,"student_name":"D.E.Sanuth Nihansa","AL_year":2027},{"student_id":1008,"student_name":"Hiruni Dilhara","AL_year":2027},{"student_id":1009,"student_name":"Dahami Niwarthana","AL_year":2027},{"student_id":1010,"student_name":"Lashan Fernando","AL_year":2027},{"student_id":1011,"student_name":"Senehas","AL_year":2027},{"student_id":1012,"student_name":"Ashwel Mathew","AL_year":2027},{"student_id":1013,"student_name":"Divon Rashen","AL_year":2027},{"student_id":1014,"student_name":"Manuja Dewmina","AL_year":2027},{"student_id":1015,"student_name":"Ryan","AL_year":2027},{"student_id":1016,"student_name":"Samili Perera","AL_year":2027},{"student_id":1017,"student_name":"Nikila","AL_year":2027},{"student_id":1018,"student_name":"Charith Dilina","AL_year":2027},{"student_id":1019,"student_name":"Vihan Lambert","AL_year":2027},{"student_id":1020,"student_name":"Sarvesh Krishna","AL_year":2027},{"student_id":1021,"student_name":"Pruthuvi","AL_year":2027},{"student_id":1022,"student_name":"Jinuka Pulsitha","AL_year":2027},{"student_id":1023,"student_name":"Oneli Hettiarachchi","AL_year":2027},{"student_id":1024,"student_name":"Sudeepa","AL_year":2027},{"student_id":1025,"student_name":"Senuth Lowe","AL_year":2027},{"student_id":1026,"student_name":"Rusell Wijerathna","AL_year":2027},{"student_id":1027,"student_name":"Induwara","AL_year":2027},{"student_id":1028,"student_name":"Shenuk Fernando","AL_year":2027},{"student_id":1029,"student_name":"Shemari Ameesha","AL_year":2027},{"student_id":1030,"student_name":"Nishan Appuhamy","AL_year":2027},{"student_id":1031,"student_name":"Shenuka","AL_year":2027},{"student_id":1032,"student_name":"Kitma Sirimanna","AL_year":2027},{"student_id":1033,"student_name":"No name 02","AL_year":2027},{"student_id":1034,"student_name":"Savindya Tanavi","AL_year":2027},{"student_id":1035,"student_name":"Abilash Akarsha","AL_year":2027},{"student_id":1036,"student_name":"Minuka Fernando","AL_year":2027},{"student_id":1037,"student_name":"Sakuna Perera","AL_year":2027},{"student_id":1038,"student_name":"Sithuki Wijewikrama","AL_year":2027},{"student_id":1039,"student_name":"Aminka Perera","AL_year":2027},{"student_id":1040,"student_name":"Ronal Fernando","AL_year":2027},{"student_id":1041,"student_name":"Shehani Silva","AL_year":2027},{"student_id":1042,"student_name":"R.Shadurshan","AL_year":2027},{"student_id":1043,"student_name":"P.Vittara Kurera","AL_year":2027},{"student_id":1044,"student_name":"Shiroshi Jayawardhana","AL_year":2027},{"student_id":1045,"student_name":"Hasfa Imithiyas","AL_year":2027},{"student_id":1046,"student_name":"Chamudi Silva","AL_year":2027},{"student_id":1047,"student_name":"Onela Gomez","AL_year":2027},{"student_id":1048,"student_name":"Akein Sehas","AL_year":2027},{"student_id":1049,"student_name":"Omethmee","AL_year":2027},{"student_id":1050,"student_name":"Umara Fernando","AL_year":2027},{"student_id":1051,"student_name":"Harindi Fernando","AL_year":2027},{"student_id":1052,"student_name":"Senesh Fernando","AL_year":2027},{"student_id":1053,"student_name":"Maleesha","AL_year":2027},{"student_id":1054,"student_name":"Noname 01","AL_year":2027},{"student_id":1055,"student_name":"Raneshi Raharathnam","AL_year":2027},{"student_id":1056,"student_name":"Sangeeth","AL_year":2027},{"student_id":1057,"student_name":"Dulya Holmes","AL_year":2027},{"student_id":1058,"student_name":"Sahansa","AL_year":2027},{"student_id":1059,"student_name":"Sanuley Herath","AL_year":2027},{"student_id":1060,"student_name":"Vishal","AL_year":2027},{"student_id":1061,"student_name":"Chrishane Fernando","AL_year":2027},{"student_id":2001,"student_name":"Seniru Thisan","AL_year":2026},{"student_id":2002,"student_name":"Nethini Perera","AL_year":2026},{"student_id":2003,"student_name":"Amelia","AL_year":2026},{"student_id":2004,"student_name":"Nadeesh Fernando","AL_year":2026},{"student_id":2005,"student_name":"Vinula Jayaweera","AL_year":2026},{"student_id":2006,"student_name":"Shevon Fernando","AL_year":2026},{"student_id":2007,"student_name":"Mishali Dias","AL_year":2026},{"student_id":2008,"student_name":"Dahami Fernando","AL_year":2026},{"student_id":2009,"student_name":"Sachini Vaas","AL_year":2026},{"student_id":2010,"student_name":"Senethya Fernando","AL_year":2026},{"student_id":2011,"student_name":"Amishki Ranasinghe","AL_year":2026},{"student_id":2012,"student_name":"Kaveen Ishara","AL_year":2026},{"student_id":2013,"student_name":"Yasiru","AL_year":2026},{"student_id":2014,"student_name":"Rashmi Rosa","AL_year":2026},{"student_id":2015,"student_name":"Chitmalee Thesanga","AL_year":2026},{"student_id":2016,"student_name":"Senith De Silva","AL_year":2026},{"student_id":2017,"student_name":"Christeen","AL_year":2026}];
+
+const SEED_MARKS = [{"student_id":1001,"paper_no":9,"mark":54.0},{"student_id":1002,"paper_no":9,"mark":52.5},{"student_id":1003,"paper_no":9,"mark":50.0},{"student_id":1004,"paper_no":9,"mark":49.5},{"student_id":1005,"paper_no":9,"mark":47.5},{"student_id":1006,"paper_no":9,"mark":47.5},{"student_id":1007,"paper_no":9,"mark":43.0},{"student_id":1008,"paper_no":9,"mark":40.5},{"student_id":1009,"paper_no":9,"mark":40.25},{"student_id":1010,"paper_no":9,"mark":39.0},{"student_id":1011,"paper_no":9,"mark":38.0},{"student_id":1012,"paper_no":9,"mark":37.25},{"student_id":1013,"paper_no":9,"mark":37.0},{"student_id":1014,"paper_no":9,"mark":37.0},{"student_id":1015,"paper_no":9,"mark":33.75},{"student_id":1016,"paper_no":9,"mark":32.75},{"student_id":1017,"paper_no":9,"mark":32.0},{"student_id":1018,"paper_no":9,"mark":32.0},{"student_id":1019,"paper_no":9,"mark":32.0},{"student_id":1020,"paper_no":9,"mark":31.25},{"student_id":1021,"paper_no":9,"mark":30.75},{"student_id":1022,"paper_no":9,"mark":30.0},{"student_id":1023,"paper_no":9,"mark":27.75},{"student_id":1024,"paper_no":9,"mark":27.0},{"student_id":1025,"paper_no":9,"mark":26.0},{"student_id":1026,"paper_no":9,"mark":25.25},{"student_id":1027,"paper_no":9,"mark":25.0},{"student_id":1028,"paper_no":9,"mark":25.0},{"student_id":1029,"paper_no":9,"mark":24.0},{"student_id":1030,"paper_no":9,"mark":23.5},{"student_id":1031,"paper_no":9,"mark":22.0},{"student_id":1032,"paper_no":9,"mark":22.0},{"student_id":1033,"paper_no":9,"mark":22.0},{"student_id":1034,"paper_no":9,"mark":21.5},{"student_id":1035,"paper_no":9,"mark":21.25},{"student_id":1036,"paper_no":9,"mark":21.0},{"student_id":1037,"paper_no":9,"mark":20.25},{"student_id":1038,"paper_no":9,"mark":20.0},{"student_id":1039,"paper_no":9,"mark":20.0},{"student_id":1040,"paper_no":9,"mark":19.5},{"student_id":1041,"paper_no":9,"mark":19.0},{"student_id":1042,"paper_no":9,"mark":19.0},{"student_id":1043,"paper_no":9,"mark":18.5},{"student_id":1044,"paper_no":9,"mark":16.25},{"student_id":1045,"paper_no":9,"mark":15.5},{"student_id":1046,"paper_no":9,"mark":13.5},{"student_id":1047,"paper_no":9,"mark":13.0},{"student_id":1048,"paper_no":9,"mark":12.5},{"student_id":1049,"paper_no":9,"mark":11.0},{"student_id":1050,"paper_no":9,"mark":8.25},{"student_id":1051,"paper_no":9,"mark":8.25},{"student_id":1052,"paper_no":9,"mark":8.25},{"student_id":1053,"paper_no":9,"mark":6.5},{"student_id":1054,"paper_no":9,"mark":5.0},{"student_id":1055,"paper_no":9,"mark":3.75},{"student_id":1056,"paper_no":9,"mark":3.75},{"student_id":1057,"paper_no":9,"mark":3.5},{"student_id":1058,"paper_no":9,"mark":3.5},{"student_id":1059,"paper_no":9,"mark":2.75},{"student_id":1060,"paper_no":9,"mark":2.75},{"student_id":1061,"paper_no":9,"mark":0.5},{"student_id":2001,"paper_no":41,"mark":75.25},{"student_id":2002,"paper_no":41,"mark":65.75},{"student_id":2003,"paper_no":41,"mark":50.0},{"student_id":2004,"paper_no":41,"mark":49.75},{"student_id":2005,"paper_no":41,"mark":49.5},{"student_id":2006,"paper_no":41,"mark":47.5},{"student_id":2007,"paper_no":41,"mark":42.25},{"student_id":2008,"paper_no":41,"mark":40.25},{"student_id":2009,"paper_no":41,"mark":38.75},{"student_id":2010,"paper_no":41,"mark":37.5},{"student_id":2011,"paper_no":41,"mark":36.25},{"student_id":2012,"paper_no":41,"mark":26.25},{"student_id":2013,"paper_no":41,"mark":21.5},{"student_id":2014,"paper_no":41,"mark":18.5},{"student_id":2015,"paper_no":41,"mark":17.0},{"student_id":2016,"paper_no":41,"mark":15.0},{"student_id":2017,"paper_no":41,"mark":13.5}];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let students = [], marks = [];
+let sortStudentsKey = 'student_id', sortStudentsDir = 1;
+let sortMarksKey = 'student_id', sortMarksDir = 1;
+const PASS = 'admin123';
+const SK = 'cms_students', MK = 'cms_marks';
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+function loadData() {
+  try {
+    const s = localStorage.getItem(SK);
+    const m = localStorage.getItem(MK);
+    students = s ? JSON.parse(s) : JSON.parse(JSON.stringify(SEED_STUDENTS));
+    marks    = m ? JSON.parse(m) : JSON.parse(JSON.stringify(SEED_MARKS));
+    if (!s) localStorage.setItem(SK, JSON.stringify(students));
+    if (!m) localStorage.setItem(MK, JSON.stringify(marks));
+  } catch(e) {
+    students = JSON.parse(JSON.stringify(SEED_STUDENTS));
+    marks    = JSON.parse(JSON.stringify(SEED_MARKS));
+  }
+}
+function saveStudents() { localStorage.setItem(SK, JSON.stringify(students)); }
+function saveMarks()    { localStorage.setItem(MK, JSON.stringify(marks)); }
+
+// ─── Stats helpers ────────────────────────────────────────────────────────────
+function mean(arr)   { return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function stddev(arr) { const m=mean(arr); return Math.sqrt(arr.reduce((s,v)=>s+(v-m)**2,0)/arr.length); }
+function zScore(v,m,sd) { return sd===0?0:(v-m)/sd; }
+function rankIn(val, arr) { return [...arr].sort((a,b)=>b-a).indexOf(val)+1; }
+
+function getPaperStats() {
+  const map = {};
+  marks.forEach(r => { if(!map[r.paper_no]) map[r.paper_no]=[]; map[r.paper_no].push(r.mark); });
+  const out = {};
+  Object.keys(map).forEach(p => {
+    const m=mean(map[p]), sd=stddev(map[p]);
+    out[p]={mean:m,sd,max:Math.max(...map[p]),min:Math.min(...map[p]),all:map[p]};
+  });
+  return out;
+}
+
+function studentName(id) {
+  const s = students.find(x=>x.student_id===id);
+  return s ? s.student_name : `ID ${id}`;
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+function doLogin() {
+  if(document.getElementById('loginPass').value === PASS) {
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    loadData(); initApp();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+  }
+}
+function doLogout() {
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginErr').style.display='none';
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+function nav(btn) {
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const vname = btn.dataset.view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+vname).classList.add('active');
+  refreshView(vname);
+}
+
+function refreshView(v) {
+  if(v==='dashboard')    renderDashboard();
+  if(v==='students-list') renderStudentsList();
+  if(v==='marks-list')   renderMarksList();
+  if(v==='performance')  renderPerformance();
+  if(v==='add-mark')     populateStudentSelect();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function initApp() {
+  updateTopbar();
+  renderDashboard();
+  populateFilters();
+}
+
+function updateTopbar() {
+  const papers = [...new Set(marks.map(m=>m.paper_no))];
+  document.getElementById('topbar-counts').textContent =
+    `${students.length} students · ${marks.length} marks · ${papers.length} papers`;
+}
+
+function populateFilters() {
+  const years = [...new Set(students.map(s=>s.AL_year))].sort();
+  const papers = [...new Set(marks.map(m=>m.paper_no))].sort((a,b)=>a-b);
+
+  // Year filters
+  ['sl-year'].forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    while(el.options.length>1) el.remove(1);
+    years.forEach(y=>{ const o=new Option(y,y); el.add(o); });
+    el.value=cur;
+  });
+
+  // Paper filters
+  ['ml-paper','pf-paper'].forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    while(el.options.length>1) el.remove(1);
+    papers.forEach(p=>{ const o=new Option(`Paper ${p}`,p); el.add(o); });
+    el.value=cur;
+  });
+}
+
+function populateStudentSelect() {
+  const sel = document.getElementById('am-student');
+  sel.innerHTML='';
+  [...students].sort((a,b)=>a.student_id-b.student_id).forEach(s=>{
+    const o = new Option(`${s.student_id} — ${s.student_name}`, s.student_id);
+    sel.add(o);
+  });
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const ps = getPaperStats();
+  const papers = Object.keys(ps);
+  const totalStudents = students.length;
+  const totalMarks = marks.length;
+  const allMeans = papers.map(p=>ps[p].mean);
+  const overallAvg = allMeans.length ? mean(allMeans) : 0;
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card c1">
+      <div class="sc-label">Total Students</div>
+      <div class="sc-value">${totalStudents}</div>
+      <div class="sc-sub">${[...new Set(students.map(s=>s.AL_year))].map(y=>y+' AL').join(' · ')}</div>
+    </div>
+    <div class="stat-card c2">
+      <div class="sc-label">Total Marks</div>
+      <div class="sc-value">${totalMarks}</div>
+      <div class="sc-sub">${papers.length} paper${papers.length!==1?'s':''} tracked</div>
+    </div>
+    <div class="stat-card c3">
+      <div class="sc-label">Overall Avg</div>
+      <div class="sc-value">${overallAvg.toFixed(1)}</div>
+      <div class="sc-sub">Across all papers</div>
+    </div>
+    <div class="stat-card c4">
+      <div class="sc-label">Highest Score</div>
+      <div class="sc-value">${marks.length ? Math.max(...marks.map(m=>m.mark)) : '—'}</div>
+      <div class="sc-sub">${marks.length ? studentName(marks.sort((a,b)=>b.mark-a.mark)[0].student_id) : ''}</div>
+    </div>
+  `;
+
+  // Top performers
+  const enriched = marks.map(r => {
+    const p = r.paper_no;
+    const stat = ps[p];
+    const z = stat ? zScore(r.mark, stat.mean, stat.sd) : 0;
+    const rnk = stat ? rankIn(r.mark, stat.all) : null;
+    return { ...r, z, rank: rnk, name: studentName(r.student_id), alYear: (students.find(s=>s.student_id===r.student_id)||{}).AL_year };
+  }).sort((a,b)=>b.mark-a.mark).slice(0,10);
+
+  const rows = enriched.map((r,i)=>`
+    <tr>
+      <td><span class="mono" style="color:var(--cyan)">#${i+1}</span></td>
+      <td>${r.name}</td>
+      <td><span class="mono" style="color:var(--text-2)">${r.student_id}</span></td>
+      <td><span class="badge badge-${r.alYear==2027?'cyan':'amber'}">${r.alYear}</span></td>
+      <td><span class="mono">${r.paper_no}</span></td>
+      <td><span class="mono">${r.mark}</span></td>
+      <td><span class="mono ${r.z>=0.5?'z-pos':r.z<-0.5?'z-neg':'z-neu'}">${r.z>=0?'+':''}${r.z.toFixed(3)}</span></td>
+    </tr>`).join('');
+  document.getElementById('top-tbody').innerHTML = rows || '<tr><td colspan="7"><div class="empty-state">No data</div></td></tr>';
+}
+
+// ─── Students List ────────────────────────────────────────────────────────────
+function sortStudents(key) {
+  if(sortStudentsKey===key) sortStudentsDir*=-1; else { sortStudentsKey=key; sortStudentsDir=1; }
+  renderStudentsList();
+}
+
+function renderStudentsList() {
+  const q = (document.getElementById('sl-search').value||'').toLowerCase();
+  const yr = document.getElementById('sl-year').value;
+  const ps = getPaperStats();
+
+  let data = students.filter(s=>{
+    const match = s.student_name.toLowerCase().includes(q) || String(s.student_id).includes(q);
+    const yearOk = yr ? s.AL_year==yr : true;
+    return match && yearOk;
+  });
+
+  data.sort((a,b)=>{
+    let av=a[sortStudentsKey], bv=b[sortStudentsKey];
+    if(typeof av==='string') av=av.toLowerCase(), bv=bv.toLowerCase();
+    return av<bv?-sortStudentsDir:av>bv?sortStudentsDir:0;
+  });
+
+  const rows = data.map(s=>{
+    const smarks = marks.filter(m=>m.student_id===s.student_id);
+    const avg = smarks.length ? mean(smarks.map(m=>m.mark)).toFixed(1) : '—';
+    return `
+      <tr class="expandable" onclick="toggleExpand(this,${s.student_id})">
+        <td><span class="mono">${s.student_id}</span></td>
+        <td>${s.student_name}</td>
+        <td><span class="badge badge-${s.AL_year==2027?'cyan':'amber'}">${s.AL_year}</span></td>
+        <td><span class="mono">${smarks.length}</span></td>
+        <td><span class="mono">${avg}</span></td>
+        <td><button class="action-btn" onclick="event.stopPropagation();deleteStudent(${s.student_id})">Delete</button></td>
+      </tr>
+      <tr class="expanded-row" id="exp-${s.student_id}" style="display:none">
+        <td colspan="6">${buildExpandPanel(s.student_id, ps)}</td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('sl-tbody').innerHTML = rows || '<tr><td colspan="6"><div class="empty-state">No students found</div></td></tr>';
+}
+
+function buildExpandPanel(sid, ps) {
+  const smarks = marks.filter(m=>m.student_id===sid);
+  if(!smarks.length) return `<div class="expand-panel" style="grid-template-columns:1fr"><div style="color:var(--text-3);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:4px">No marks recorded</div></div>`;
+  const cards = smarks.map(r=>{
+    const stat = ps[r.paper_no];
+    const z = stat ? zScore(r.mark,stat.mean,stat.sd) : 0;
+    const rnk = stat ? rankIn(r.mark,stat.all) : '?';
+    const pct = stat ? (r.mark/stat.max*100) : 0;
+    const zClass = z>=0.5?'z-pos':z<-0.5?'z-neg':'z-neu';
+    const barColor = z>=0.5?'#4ecb71':z<-0.5?'#ff5757':'#4e7fff';
+    return `
+      <div class="expand-paper">
+        <div class="ep-label">Paper</div>
+        <div class="ep-paper">${r.paper_no}</div>
+        <div class="ep-stats">
+          <div class="ep-row"><span class="ep-key">Mark</span><span class="ep-val">${r.mark}</span></div>
+          <div class="ep-row"><span class="ep-key">Rank</span><span class="ep-val">${rnk}/${stat?stat.all.length:'?'}</span></div>
+          <div class="ep-row"><span class="ep-key">Z-Score</span><span class="ep-val ${zClass}">${z>=0?'+':''}${z.toFixed(3)}</span></div>
+          <div class="ep-row"><span class="ep-key">Avg</span><span class="ep-val">${stat?stat.mean.toFixed(1):'—'}</span></div>
+        </div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      </div>`;
+  }).join('');
+  return `<div class="expand-panel">${cards}</div>`;
+}
+
+function toggleExpand(row, sid) {
+  const expRow = document.getElementById(`exp-${sid}`);
+  const isOpen = expRow.style.display !== 'none';
+  // Close all
+  document.querySelectorAll('.expanded-row').forEach(r=>r.style.display='none');
+  if(!isOpen) expRow.style.display='';
+}
+
+function deleteStudent(sid) {
+  if(!confirm(`Delete student ID ${sid}? This also removes all their marks.`)) return;
+  students = students.filter(s=>s.student_id!==sid);
+  marks = marks.filter(m=>m.student_id!==sid);
+  saveStudents(); saveMarks(); updateTopbar();
+  renderStudentsList(); populateFilters();
+  toast('Student deleted','ok');
+}
+
+// ─── Marks List ───────────────────────────────────────────────────────────────
+function sortMarks(key) {
+  if(sortMarksKey===key) sortMarksDir*=-1; else { sortMarksKey=key; sortMarksDir=1; }
+  renderMarksList();
+}
+
+function renderMarksList() {
+  const q = (document.getElementById('ml-search').value||'').toLowerCase();
+  const paper = document.getElementById('ml-paper').value;
+  const ps = getPaperStats();
+
+  let data = marks.filter(r=>{
+    const name = studentName(r.student_id).toLowerCase();
+    const matchQ = String(r.student_id).includes(q) || name.includes(q) || String(r.paper_no).includes(q);
+    const matchP = paper ? r.paper_no==paper : true;
+    return matchQ && matchP;
+  });
+
+  // Attach name for sorting
+  data = data.map(r=>({...r, student_name: studentName(r.student_id)}));
+  data.sort((a,b)=>{
+    let av=a[sortMarksKey], bv=b[sortMarksKey];
+    if(typeof av==='string') av=av.toLowerCase(), bv=bv.toLowerCase();
+    return av<bv?-sortMarksDir:av>bv?sortMarksDir:0;
+  });
+
+  const rows = data.map(r=>{
+    const stat = ps[r.paper_no];
+    const z = stat ? zScore(r.mark,stat.mean,stat.sd) : 0;
+    const rnk = stat ? rankIn(r.mark,stat.all) : '?';
+    const total = stat ? stat.all.length : '?';
+    const zClass = z>=0.5?'z-pos':z<-0.5?'z-neg':'z-neu';
+    return `
+      <tr>
+        <td><span class="mono">${r.student_id}</span></td>
+        <td>${r.student_name}</td>
+        <td><span class="mono">${r.paper_no}</span></td>
+        <td><span class="mono">${r.mark}</span></td>
+        <td><span class="mono">${rnk}/${total}</span></td>
+        <td><span class="mono ${zClass}">${z>=0?'+':''}${z.toFixed(3)}</span></td>
+        <td><button class="action-btn" onclick="deleteMark(${r.student_id},${r.paper_no})">Delete</button></td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('ml-tbody').innerHTML = rows || '<tr><td colspan="7"><div class="empty-state">No records found</div></td></tr>';
+}
+
+function deleteMark(sid, paper) {
+  if(!confirm(`Delete mark for student ${sid}, paper ${paper}?`)) return;
+  marks = marks.filter(m=>!(m.student_id===sid && m.paper_no===paper));
+  saveMarks(); updateTopbar(); populateFilters();
+  renderMarksList(); toast('Mark deleted','ok');
+}
+
+// ─── Performance ─────────────────────────────────────────────────────────────
+function renderPerformance() {
+  const q = (document.getElementById('pf-search').value||'').toLowerCase();
+  const paper = document.getElementById('pf-paper').value;
+  const ps = getPaperStats();
+
+  let data = students.filter(s=>
+    s.student_name.toLowerCase().includes(q) || String(s.student_id).includes(q)
+  );
+
+  const rows = data.map(s=>{
+    let smarks = marks.filter(m=>m.student_id===s.student_id);
+    if(paper) smarks = smarks.filter(m=>m.paper_no==paper);
+    if(!smarks.length) return `
+      <tr>
+        <td>${s.student_name}</td>
+        <td><span class="mono">${s.student_id}</span></td>
+        <td><span class="badge badge-${s.AL_year==2027?'cyan':'amber'}">${s.AL_year}</span></td>
+        <td><span class="mono" style="color:var(--text-3)">0</span></td>
+        <td>—</td><td>—</td><td>—</td>
+      </tr>`;
+
+    const avgMark = mean(smarks.map(m=>m.mark)).toFixed(1);
+    const zScores = smarks.map(r=>{ const st=ps[r.paper_no]; return st?zScore(r.mark,st.mean,st.sd):0; });
+    const avgZ = mean(zScores);
+    const ranks = smarks.map(r=>{ const st=ps[r.paper_no]; return st?rankIn(r.mark,st.all):null; }).filter(Boolean);
+    const bestRank = ranks.length ? Math.min(...ranks) : null;
+    const zClass = avgZ>=0.5?'z-pos':avgZ<-0.5?'z-neg':'z-neu';
+    return `
+      <tr>
+        <td>${s.student_name}</td>
+        <td><span class="mono">${s.student_id}</span></td>
+        <td><span class="badge badge-${s.AL_year==2027?'cyan':'amber'}">${s.AL_year}</span></td>
+        <td><span class="mono">${smarks.length}</span></td>
+        <td><span class="mono">${avgMark}</span></td>
+        <td><span class="mono">${bestRank ? '#'+bestRank : '—'}</span></td>
+        <td><span class="mono ${zClass}">${avgZ>=0?'+':''}${avgZ.toFixed(3)}</span></td>
+      </tr>`;
+  }).join('');
+
+  document.getElementById('pf-tbody').innerHTML = rows || '<tr><td colspan="7"><div class="empty-state">No students found</div></td></tr>';
+}
+
+// ─── Add Student ──────────────────────────────────────────────────────────────
+function addStudent() {
+  const id   = parseInt(document.getElementById('as-id').value);
+  const name = document.getElementById('as-name').value.trim();
+  const year = parseInt(document.getElementById('as-year').value);
+  const fb   = document.getElementById('as-fb');
+
+  if(!id || isNaN(id)) return showFb(fb,'error','⚠ Enter a valid student ID');
+  if(students.find(s=>s.student_id===id)) return showFb(fb,'error',`⚠ ID ${id} already exists`);
+  if(!name) return showFb(fb,'error','⚠ Enter a student name');
+
+  students.push({student_id:id, student_name:name, AL_year:year});
+  students.sort((a,b)=>a.student_id-b.student_id);
+  saveStudents(); updateTopbar(); populateFilters();
+
+  document.getElementById('as-id').value='';
+  document.getElementById('as-name').value='';
+  showFb(fb,'success',`✓ Added: ${name} (ID ${id}, AL ${year})`);
+  toast('Student added','ok');
+}
+
+// ─── Add Mark ─────────────────────────────────────────────────────────────────
+function addMark() {
+  const sid   = parseInt(document.getElementById('am-student').value);
+  const paper = parseInt(document.getElementById('am-paper').value);
+  const mark  = parseFloat(document.getElementById('am-mark').value);
+  const fb    = document.getElementById('am-fb');
+
+  if(!sid) return showFb(fb,'error','⚠ Select a student');
+  if(!paper || isNaN(paper) || paper<1) return showFb(fb,'error','⚠ Enter a valid paper number');
+  if(isNaN(mark) || mark<0) return showFb(fb,'error','⚠ Enter a valid mark');
+  if(marks.find(m=>m.student_id===sid && m.paper_no===paper))
+    return showFb(fb,'error',`⚠ Mark already exists for this student & paper. Delete it first.`);
+
+  marks.push({student_id:sid, paper_no:paper, mark});
+  saveMarks(); updateTopbar(); populateFilters();
+
+  document.getElementById('am-paper').value='';
+  document.getElementById('am-mark').value='';
+  const sname = studentName(sid);
+  showFb(fb,'success',`✓ Recorded: ${sname} — Paper ${paper} — Mark ${mark}`);
+  toast('Mark recorded','ok');
+}
+
+// ─── Export CSV ───────────────────────────────────────────────────────────────
+function exportStudents() {
+  const rows = ['student_id,student_name,AL_year',
+    ...students.map(s=>`${s.student_id},${s.student_name},${s.AL_year}`)];
+  downloadCSV(rows.join('\n'), 'students.csv');
+}
+
+function exportMarks() {
+  const rows = ['student_id,paper_no,mark',
+    ...marks.map(m=>`${m.student_id},${m.paper_no},${m.mark}`)];
+  downloadCSV(rows.join('\n'), 'marks.csv');
+}
+
+function downloadCSV(content, filename) {
+  const blob = new Blob([content], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  toast(`Downloaded ${filename}`,'ok');
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function showFb(el, type, msg) {
+  el.textContent = msg;
+  el.className = `form-feedback ${type}`;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
+let _toastT;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = (type==='ok'?'✓ ':'⚠ ') + msg;
+  el.className = `show ${type}`;
+  clearTimeout(_toastT);
+  _toastT = setTimeout(()=>{ el.classList.remove('show'); }, 3000);
+}
+</script>
+</body>
+</html>
